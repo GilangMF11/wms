@@ -35,7 +35,7 @@ module.exports = {
     {
       // Node.js fallback (tsx)
       name: 'wms-api-node',
-      script: './node_modules/.bin/tsx',
+      script: 'node_modules/.bin/tsx',
       args: 'apps/api/src/index.ts',
       cwd: '/var/www/html/javascript/wms',
       env: {
