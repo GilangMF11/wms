@@ -9,7 +9,7 @@ DOMAIN="wms.otakweb.com"  # Ganti dengan domain/VPS IP
 
 echo "=== WMS Production Setup ==="
 
-# 1. Install Bun
+# 1. Install Bun (optional — needed for dev server, production can use Node.js + tsx)
 if ! command -v bun &>/dev/null; then
     echo "Installing Bun..."
     curl -fsSL https://bun.sh/install | bash
@@ -34,9 +34,15 @@ npm run db:migrate
 npm run db:seed
 npm run build
 
-# 4. PM2
-pm2 delete wms-api 2>/dev/null || true
-pm2 start ecosystem.config.js
+# 4. PM2 — use Bun if available, otherwise Node.js + tsx
+pm2 delete wms-api wms-api-node 2>/dev/null || true
+if command -v bun &>/dev/null; then
+    pm2 start ecosystem.config.js --only wms-api
+else
+    echo "Bun not found, using Node.js + tsx fallback"
+    npm install -w apps/api
+    pm2 start ecosystem.config.js --only wms-api-node
+fi
 pm2 save
 pm2 startup systemd -u "$(whoami)" --hp "$HOME"
 
