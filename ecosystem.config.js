@@ -21,7 +21,7 @@ module.exports = {
       cwd: '/var/www/html/javascript/wms',
       env: {
         NODE_ENV: 'production',
-        PORT: 3000,
+        PORT: 3034,
       },
       instances: 1,
       exec_mode: 'fork',
@@ -41,7 +41,7 @@ module.exports = {
       cwd: '/var/www/html/javascript/wms',
       env: {
         NODE_ENV: 'production',
-        PORT: 3000,
+        PORT: 3034,
       },
       instances: 1,
       exec_mode: 'fork',

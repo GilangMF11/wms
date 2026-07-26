@@ -51,11 +51,22 @@ echo "=== Nginx Setup ==="
 sudo cp nginx.conf /etc/nginx/sites-available/wms
 sudo sed -i "s/wms.otakweb.com/$DOMAIN/g" /etc/nginx/sites-available/wms
 sudo ln -sf /etc/nginx/sites-available/wms /etc/nginx/sites-enabled/
+
+# 6. Certbot (SSL/HTTPS)
+echo "=== SSL Setup ==="
+if ! command -v certbot &>/dev/null; then
+    echo "Installing Certbot..."
+    sudo apt update
+    sudo apt install -y certbot python3-certbot-nginx
+fi
+echo "Requesting SSL certificate..."
+sudo certbot --nginx -d "$DOMAIN" --non-interactive --agree-tos -m "admin@$DOMAIN" --redirect
+
 sudo nginx -t && sudo systemctl reload nginx
 
 echo ""
 echo "=== Done ==="
-echo "App: http://$DOMAIN"
-echo "API: http://$DOMAIN/api/v1/health"
+echo "App: https://$DOMAIN"
+echo "API: https://$DOMAIN/api/v1/health"
 echo ""
 echo "Login: admin@toko.com / admin123"
