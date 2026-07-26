@@ -31,7 +31,12 @@ app.route('/api/v1/reports', dashboardRoutes);
 
 app.get('/api/v1/health', (c) => c.json({ success: true, data: { status: 'ok' } }));
 
-export default {
-  port: Number(process.env.PORT) || 3000,
-  fetch: app.fetch,
-};
+const port = Number(process.env.PORT) || 3034;
+
+import('@hono/node-server').then(({ serve }) => {
+  serve({ fetch: app.fetch, port }, (info) => {
+    console.log(`Server running on http://localhost:${info.port}`);
+  });
+});
+
+export default { port, fetch: app.fetch };
