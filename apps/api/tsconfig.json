@@ -1,0 +1,13 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "../..",
+    "types": ["bun-types"],
+    "paths": {
+      "@wms/shared": ["../../packages/shared/src"],
+      "@wms/shared/*": ["../../packages/shared/src/*"]
+    }
+  },
+  "include": ["src/**/*.ts", "../../packages/shared/src/**/*.ts"]
+}

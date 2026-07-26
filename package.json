@@ -1,0 +1,27 @@
+{
+  "name": "wms",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:api": "npm -w apps/api run dev",
+    "dev:web": "npm -w apps/web run dev",
+    "dev": "npm run dev:api & npm run dev:web",
+    "build:api": "npm -w apps/api run build",
+    "build:web": "npm -w apps/web run build",
+    "build": "npm run build:api && npm run build:web",
+    "db:generate": "npm -w apps/api run db:generate",
+    "db:migrate": "npm -w apps/api run db:migrate",
+    "db:seed": "npm -w apps/api run db:seed",
+    "db:studio": "npm -w apps/api run db:studio",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "typescript": "^5.7.0"
+  }
+}
