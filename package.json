@@ -18,7 +18,10 @@
     "db:studio": "npm -w apps/api run db:studio",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "deploy": "npm run build && pm2 start ecosystem.config.js",
+    "deploy:reload": "npm run build && pm2 reload ecosystem.config.js",
+    "setup:prod": "npm install && npm run db:migrate && npm run db:seed && npm run build"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",

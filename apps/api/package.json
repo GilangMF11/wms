@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "bun --watch src/index.ts",
-    "build": "bun build src/index.ts --outdir dist",
+    "build": "echo 'API runs directly via Bun (no build required)'",
     "start": "bun dist/index.js",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "bun run src/db/migrate.ts",
