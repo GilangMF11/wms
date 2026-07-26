@@ -51,7 +51,7 @@
         </div>
         <div>
           <label class="block text-sm font-medium mb-1">Role *</label>
-          <Dropdown v-model="userForm.role" :options="roleOptions" optionLabel="label" optionValue="value"
+          <Select v-model="userForm.role" :options="roleOptions" optionLabel="label" optionValue="value"
             class="w-full" required />
         </div>
         <Button type="submit" :label="editing ? 'Update' : 'Simpan'" :loading="saving" class="mt-2" />
@@ -71,7 +71,7 @@ import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Password from 'primevue/password';
 import Dialog from 'primevue/dialog';
-import Dropdown from 'primevue/dropdown';
+import Select from 'primevue/select';
 import Tag from 'primevue/tag';
 import Skeleton from 'primevue/skeleton';
 

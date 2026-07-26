@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { db, schema } from '../db';
-import { eq, and, count, sql, sum, isNull } from 'drizzle-orm';
+import { eq, and, count, sql, isNull, inArray } from 'drizzle-orm';
 import { authMiddleware } from '../middleware/auth';
 
 const router = new Hono();
@@ -65,7 +65,7 @@ router.get('/low-stock', async (c) => {
 
   const productIds = raw.map(r => r.productId);
   const products = productIds.length > 0
-    ? await db.select().from(schema.products).where(and(...productIds.map(id => eq(schema.products.id, id))))
+    ? await db.select().from(schema.products).where(inArray(schema.products.id, productIds))
     : [];
 
   return c.json({

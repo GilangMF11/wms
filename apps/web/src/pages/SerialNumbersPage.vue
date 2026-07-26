@@ -2,6 +2,8 @@
   <div class="space-y-4">
     <div class="flex items-center justify-between">
       <h1 class="page-title">Serial Numbers</h1>
+      <Button v-if="auth.user?.role !== 'owner'" label="Tambah SN" icon="pi pi-plus" size="small"
+        @click="openBulkDialog()" />
     </div>
 
     <Toolbar class="mb-3">
@@ -13,7 +15,7 @@
             <Button icon="pi pi-camera" severity="secondary" outlined size="small" v-tooltip.top="'Scan Barcode'"
               @click="showScanner = true" class="shrink-0" />
           </div>
-          <Dropdown v-model="filterStatus" :options="statusOptions" optionLabel="label" optionValue="value"
+          <Select v-model="filterStatus" :options="statusOptions" optionLabel="label" optionValue="value"
             placeholder="Semua status" class="w-full sm:w-36" size="small" showClear @change="fetchSNs" />
         </div>
       </template>
@@ -68,25 +70,68 @@
       </div>
     </Dialog>
 
+    <Dialog v-model:visible="bulkDialog" header="Tambah Serial Number" :modal="true" class="w-full max-w-lg">
+      <div class="flex flex-col gap-3">
+        <div>
+          <label class="block text-sm font-medium mb-1">Produk *</label>
+          <Select v-model="bulkForm.product_id" :options="products" optionLabel="name" optionValue="id"
+            placeholder="Pilih produk" class="w-full" filter size="small" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">Kondisi</label>
+          <Select v-model="bulkForm.condition" :options="conditionOptions" optionLabel="label" optionValue="value"
+            class="w-full" size="small" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">Jumlah SN</label>
+          <InputNumber v-model="bulkForm.quantity" class="w-full" :min="1" :max="500" size="small" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">Serial Numbers ({{ bulkForm.quantity }} field)</label>
+          <div class="flex gap-2 mb-2">
+            <Button label="Auto-Generate" icon="pi pi-cog" size="small" severity="secondary" outlined
+              @click="autoGenerate" />
+            <Button icon="pi pi-camera" size="small" severity="info" outlined v-tooltip.top="'Scan SN satu per satu'"
+              @click="scanBulkSn = true" />
+          </div>
+          <div class="max-h-48 overflow-y-auto space-y-1">
+            <div v-for="(_, i) in bulkForm.quantity" :key="i" class="flex gap-2 items-center">
+              <span class="text-xs text-slate-400 w-8">{{ i + 1 }}.</span>
+              <InputText v-model="bulkForm.serial_numbers[i]" class="flex-1 font-mono" size="small"
+                :placeholder="'SN-' + (i + 1)" />
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-end gap-2 mt-2">
+          <Button label="Batal" severity="secondary" outlined @click="bulkDialog = false" />
+          <Button label="Simpan" icon="pi pi-check" :loading="bulkSaving" @click="saveBulkSn" />
+        </div>
+      </div>
+    </Dialog>
+
     <BarcodeScanner v-model:visible="showScanner" @scan="onScan" />
+    <BarcodeScanner v-model:visible="scanBulkSn" @scan="onBulkScan" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import api from '../lib/axios';
+import { useAuthStore } from '../stores/auth';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
+import InputNumber from 'primevue/inputnumber';
 import Dialog from 'primevue/dialog';
 import Tag from 'primevue/tag';
 import Skeleton from 'primevue/skeleton';
 import Divider from 'primevue/divider';
-import Dropdown from 'primevue/dropdown';
+import Select from 'primevue/select';
 import Toolbar from 'primevue/toolbar';
 import BarcodeScanner from '../components/BarcodeScanner.vue';
 
+const auth = useAuthStore();
 const items = ref<any[]>([]);
 const loading = ref(false);
 const search = ref('');
@@ -95,6 +140,24 @@ const warrantyDialog = ref(false);
 const warrantyData = ref<any>(null);
 const checking = ref(false);
 const showScanner = ref(false);
+const bulkDialog = ref(false);
+const bulkSaving = ref(false);
+const scanBulkSn = ref(false);
+const products = ref<any[]>([]);
+
+const bulkForm = ref({
+  product_id: '',
+  condition: 'new',
+  quantity: 1,
+  serial_numbers: [] as string[],
+});
+
+const conditionOptions = [
+  { label: 'Baru', value: 'new' },
+  { label: 'Refurbished', value: 'refurbished' },
+  { label: 'Display Unit', value: 'display' },
+  { label: 'Rusak', value: 'damaged' },
+];
 
 const statusOptions = [
   { label: 'In Stock', value: 'in_stock' },
@@ -138,5 +201,47 @@ function onScan(code: string) {
   fetchSNs();
 }
 
-onMounted(fetchSNs);
+function openBulkDialog() {
+  bulkForm.value = { product_id: '', condition: 'new', quantity: 1, serial_numbers: [''] };
+  bulkDialog.value = true;
+}
+
+function autoGenerate() {
+  const prefix = products.value.find(p => p.id === bulkForm.value.product_id)?.sku?.slice(0, 4) || 'SN';
+  bulkForm.value.serial_numbers = Array.from({ length: bulkForm.value.quantity }, (_, i) =>
+    `${prefix}-${Date.now()}-${String(i + 1).padStart(3, '0')}`,
+  );
+}
+
+let bulkScanIndex = 0;
+function onBulkScan(code: string) {
+  if (bulkScanIndex < bulkForm.value.quantity) {
+    bulkForm.value.serial_numbers[bulkScanIndex] = code;
+    bulkScanIndex++;
+  }
+}
+
+async function saveBulkSn() {
+  if (!bulkForm.value.product_id) return;
+  bulkSaving.value = true;
+  try {
+    const sns = bulkForm.value.serial_numbers.filter(s => s.trim());
+    if (sns.length === 0) return;
+    await api.post('/serial-numbers/bulk', {
+      serial_numbers: sns.map(sn => ({
+        serial_number: sn,
+        product_id: bulkForm.value.product_id,
+        condition: bulkForm.value.condition,
+        warehouse_id: auth.user?.warehouseId,
+      })),
+    });
+    bulkDialog.value = false;
+    fetchSNs();
+  } finally { bulkSaving.value = false; }
+}
+
+onMounted(() => {
+  fetchSNs();
+  api.get('/products').then(r => products.value = r.data.data);
+});
 </script>

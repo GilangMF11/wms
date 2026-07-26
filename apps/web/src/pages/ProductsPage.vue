@@ -18,7 +18,7 @@
               @input="debouncedFetch" />
             <Button icon="pi pi-camera" severity="secondary" outlined size="small" v-tooltip.top="'Scan SKU'"
               @click="scanningForSku = true" />
-            <Dropdown
+            <Select
               v-if="categories.length"
               v-model="selectedCategory"
               :options="categories"
@@ -128,7 +128,7 @@
         </div>
         <div>
           <label class="block text-sm font-medium mb-1">Kategori</label>
-          <Dropdown v-model="form.category_id" :options="categories" optionLabel="name" optionValue="id" placeholder="Pilih kategori" class="w-full" showClear />
+          <Select v-model="form.category_id" :options="categories" optionLabel="name" optionValue="id" placeholder="Pilih kategori" class="w-full" showClear />
         </div>
         <div class="grid grid-cols-2 gap-3">
           <div>
@@ -191,7 +191,7 @@ import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
 import Dialog from 'primevue/dialog';
-import Dropdown from 'primevue/dropdown';
+import Select from 'primevue/select';
 import Tag from 'primevue/tag';
 import Card from 'primevue/card';
 import Skeleton from 'primevue/skeleton';

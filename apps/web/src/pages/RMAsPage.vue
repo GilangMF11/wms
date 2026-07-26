@@ -8,7 +8,7 @@
 
       <Toolbar class="mb-3 mt-4">
         <template #start>
-          <Dropdown v-model="filterStatus" :options="rmaStatusOptions" optionLabel="label" optionValue="value"
+          <Select v-model="filterStatus" :options="rmaStatusOptions" optionLabel="label" optionValue="value"
             placeholder="Semua status" class="w-40" size="small" showClear @change="fetchRMAs" />
         </template>
       </Toolbar>
@@ -84,7 +84,7 @@
           <div v-if="!['completed_replaced', 'completed_repaired', 'rejected'].includes(detailRma.status)" class="border-t pt-4">
             <h4 class="text-sm font-semibold mb-2">Update Status</h4>
             <div class="flex gap-2 items-end">
-              <Dropdown v-model="newStatus" :options="availableNextStatuses" optionLabel="label" optionValue="value"
+              <Select v-model="newStatus" :options="availableNextStatuses" optionLabel="label" optionValue="value"
                 placeholder="Pilih status" class="w-48" size="small" />
               <Textarea v-if="['completed_replaced', 'completed_repaired', 'rejected'].includes(newStatus)"
                 v-model="newResolution" class="flex-1" rows="2" placeholder="Detail resolusi..." size="small" />
@@ -100,8 +100,8 @@
         <div>
           <label class="block text-sm font-medium mb-1">Serial Number *</label>
           <AutoComplete v-model="selectedSn" :suggestions="snSuggestions" optionLabel="serialNumber"
-            placeholder="Cari serial number..." class="w-full font-mono" size="small" dropdown forceSelection
-            @complete="searchSN" />
+            placeholder="Ketik serial number..." class="w-full font-mono" size="small" forceSelection
+            @complete="searchSN" :minLength="1" />
         </div>
         <div>
           <label class="block text-sm font-medium mb-1">Nama Pelanggan *</label>
@@ -127,7 +127,7 @@ import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Textarea from 'primevue/textarea';
 import Dialog from 'primevue/dialog';
-import Dropdown from 'primevue/dropdown';
+import Select from 'primevue/select';
 import Card from 'primevue/card';
 import Skeleton from 'primevue/skeleton';
 import Toolbar from 'primevue/toolbar';
@@ -230,8 +230,8 @@ async function updateStatus() {
 
 async function searchSN(event: any) {
   const q = event.query?.trim();
-  if (!q || q.length < 2) { snSuggestions.value = []; return; }
-  const { data } = await api.get('/serial-numbers', { params: { serial_number: q, status: 'sold', limit: 10 } });
+  if (!q) { snSuggestions.value = []; return; }
+  const { data } = await api.get('/serial-numbers', { params: { serial_number: q, status: 'sold', limit: 20 } });
   const enriched = await Promise.all(data.data.map(async (sn: any) => {
     const { data: p } = await api.get(`/products/${sn.productId}`);
     return { ...sn, productName: p.data?.name ?? '??' };

@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { db, schema } from '../db';
-import { eq, and, count, isNull } from 'drizzle-orm';
+import { eq, and, count, isNull, ilike } from 'drizzle-orm';
 import { authMiddleware } from '../middleware/auth';
 import { requireRole } from '../middleware/rbac';
 import { validate } from '../middleware/validate';
@@ -14,7 +14,7 @@ router.get('/', async (c) => {
   const offset = (Number(page) - 1) * Number(limit);
 
   const conditions = [isNull(schema.serialNumbers.deletedAt)];
-  if (serial_number) conditions.push(eq(schema.serialNumbers.serialNumber, serial_number));
+  if (serial_number) conditions.push(ilike(schema.serialNumbers.serialNumber, `%${serial_number}%`));
   if (product_id) conditions.push(eq(schema.serialNumbers.productId, product_id));
   if (status) conditions.push(eq(schema.serialNumbers.status, status));
   if (condition) conditions.push(eq(schema.serialNumbers.condition, condition));

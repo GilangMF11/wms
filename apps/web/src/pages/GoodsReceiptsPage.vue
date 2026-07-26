@@ -77,7 +77,7 @@
             <div v-for="(item, i) in formItems" :key="i" class="grid grid-cols-12 gap-3 items-start p-3 bg-slate-50 rounded">
               <div class="col-span-12 sm:col-span-4">
                 <label class="block text-xs text-slate-500 mb-1">Produk</label>
-                <Dropdown v-model="item.product_id" :options="products" optionLabel="name" optionValue="id"
+                <Select v-model="item.product_id" :options="products" optionLabel="name" optionValue="id"
                   placeholder="Pilih produk" class="w-full" size="small" filter />
               </div>
               <div class="col-span-4 sm:col-span-3">
@@ -137,7 +137,7 @@ import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
 import Textarea from 'primevue/textarea';
 import Dialog from 'primevue/dialog';
-import Dropdown from 'primevue/dropdown';
+import Select from 'primevue/select';
 import Card from 'primevue/card';
 import Skeleton from 'primevue/skeleton';
 import DatePicker from 'primevue/datepicker';

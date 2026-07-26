@@ -16,8 +16,8 @@ module.exports = {
     {
       // Bun runtime (preferred — faster, native TS)
       name: 'wms-api',
-      script: 'apps/api/src/index.ts',
-      interpreter: 'bun',
+      script: 'start-api.sh',
+      interpreter: 'bash',
       cwd: '/var/www/html/javascript/wms',
       env: {
         NODE_ENV: 'production',
