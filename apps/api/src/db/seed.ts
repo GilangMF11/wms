@@ -1,6 +1,7 @@
 import { db, schema } from './index';
-import { hash } from 'bcryptjs';
-import { v4 as uuid } from 'uuid';
+import bcrypt from 'bcryptjs';
+import { eq, and } from 'drizzle-orm';
+const { hash } = bcrypt;
 
 const {
   warehouses, users, categories, products, bundleItems,
@@ -9,11 +10,29 @@ const {
   stockOpnames, stockOpnameItems, stockAdjustments,
 } = schema;
 
+// Bersihkan data (idempotent re-seed)
+await db.delete(stockAdjustments);
+await db.delete(stockOpnameItems);
+await db.delete(stockOpnames);
+await db.delete(goodsIssueItems);
+await db.delete(goodsIssues);
+await db.delete(rmas);
+await db.delete(supplierReturns);
+await db.delete(serialNumbers);
+await db.delete(goodsReceiptItems);
+await db.delete(goodsReceipts);
+await db.delete(bundleItems);
+await db.delete(products);
+await db.delete(categories);
+// Keep: warehouses, users
+
 // 1. Warehouse
 const [wh] = await db.insert(warehouses).values({
   name: 'Gudang Utama', code: 'WH001', address: 'Jl. Elektronik No. 1, Jakarta',
 }).onConflictDoNothing().returning();
-const warehouseId = wh!.id;
+
+const warehouseId = wh?.id || (await db.select().from(warehouses).limit(1).then(r => r[0]?.id));
+if (!warehouseId) throw new Error('No warehouse found');
 
 // 2. Users
 const pw = await hash('admin123', 12);
@@ -275,5 +294,4 @@ console.log([
   '      Aksesoris Casing = 1 unit (low stock!), Tempered Glass = 4 unit (low stock!)',
 ].join('\n'));
 
-import { eq, and } from 'drizzle-orm';
 process.exit(0);

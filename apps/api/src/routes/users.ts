@@ -1,7 +1,8 @@
 import { Hono } from 'hono';
 import { db, schema } from '../db';
 import { eq, isNull } from 'drizzle-orm';
-import { hash } from 'bcryptjs';
+import bcrypt from 'bcryptjs';
+const { hash } = bcrypt;
 import { authMiddleware } from '../middleware/auth';
 import { requireRole } from '../middleware/rbac';
 import { validate } from '../middleware/validate';
