@@ -33,11 +33,10 @@ module.exports = {
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
     },
     {
-      // Node.js + tsx fallback
+      // Node.js via shell script (most reliable)
       name: 'wms-api-node',
-      script: 'apps/api/src/index.ts',
-      interpreter: 'npx',
-      interpreter_args: 'tsx',
+      script: 'start-api.sh',
+      interpreter: 'bash',
       cwd: '/var/www/html/javascript/wms',
       env: {
         NODE_ENV: 'production',
@@ -45,7 +44,7 @@ module.exports = {
       },
       instances: 1,
       exec_mode: 'fork',
-      autorestart: false,
+      autorestart: true,
       watch: false,
       max_memory_restart: '512M',
       error_file: 'logs/api-error.log',
