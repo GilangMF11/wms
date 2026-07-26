@@ -16,6 +16,8 @@
           <div class="flex gap-2">
             <InputText v-model="search" placeholder="Cari nama/SKU..." class="w-64" size="small"
               @input="debouncedFetch" />
+            <Button icon="pi pi-camera" severity="secondary" outlined size="small" v-tooltip.top="'Scan SKU'"
+              @click="scanningForSku = true" />
             <Dropdown
               v-if="categories.length"
               v-model="selectedCategory"
@@ -82,6 +84,9 @@
             <div><span class="text-slate-500">Harga Beli</span><br /><span class="font-medium">{{ formatCurrency(Number(detailProduct.buyPrice)) }}</span></div>
             <div><span class="text-slate-500">Harga Jual</span><br /><span class="font-medium">{{ formatCurrency(Number(detailProduct.sellPrice)) }}</span></div>
           </div>
+          <div v-if="detailProduct.imageUrl" class="mb-4">
+            <img :src="detailProduct.imageUrl" class="h-32 rounded border object-cover" />
+          </div>
           <h3 class="section-title mb-3">Serial Numbers ({{ serialNumbers.length }})</h3>
           <Skeleton v-if="snLoading" width="100%" height="12rem" />
           <div v-else-if="serialNumbers.length === 0" class="empty-state">
@@ -103,9 +108,15 @@
 
     <Dialog v-model:visible="formDialog" :header="editing ? 'Edit Produk' : 'Tambah Produk'" :modal="true" class="w-full max-w-lg">
       <form @submit.prevent="saveProduct" class="flex flex-col gap-3">
-        <div>
-          <label class="block text-sm font-medium mb-1">SKU *</label>
-          <InputText v-model="form.sku" class="w-full" required />
+        <div class="flex gap-2">
+          <div class="flex-1">
+            <label class="block text-sm font-medium mb-1">SKU *</label>
+            <InputText v-model="form.sku" class="w-full font-mono" required />
+          </div>
+          <div class="self-end">
+            <Button icon="pi pi-camera" severity="secondary" outlined size="small" v-tooltip.top="'Scan SKU'"
+              @click="scanForSku = true" />
+          </div>
         </div>
         <div>
           <label class="block text-sm font-medium mb-1">Nama *</label>
@@ -127,6 +138,15 @@
           <div>
             <label class="block text-sm font-medium mb-1">Harga Jual</label>
             <InputNumber v-model="form.sell_price" class="w-full" mode="currency" currency="IDR" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">Foto Produk</label>
+          <input type="file" accept="image/jpeg,image/png,image/webp" @change="onFileChange"
+            class="w-full text-sm text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-sm file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+          <p v-if="uploading" class="text-xs text-blue-600 mt-1">Uploading...</p>
+          <div v-if="form.image_url" class="mt-2">
+            <img :src="form.image_url" class="h-24 rounded border object-cover" />
           </div>
         </div>
         <Button type="submit" :label="editing ? 'Update' : 'Simpan'" :loading="saving" class="mt-2" />
@@ -156,6 +176,8 @@
     </Dialog>
 
     <BarcodeScanner v-model:visible="scanForWarranty" @scan="onWarrantyScan" />
+    <BarcodeScanner v-model:visible="scanningForSku" @scan="onSearchScan" />
+    <BarcodeScanner v-model:visible="scanForSku" @scan="onSkuScan" />
   </div>
 </template>
 
@@ -196,7 +218,11 @@ const warrantyResult = ref<any>(null);
 const checkingWarranty = ref(false);
 const scanForWarranty = ref(false);
 
-const form = ref({ sku: '', name: '', brand: '', category_id: '', buy_price: 0, sell_price: 0 });
+const scanningForSku = ref(false);
+const scanForSku = ref(false);
+const uploading = ref(false);
+
+const form = ref({ sku: '', name: '', brand: '', category_id: '', buy_price: 0, sell_price: 0, image_url: '' });
 let debounceTimer: any = null;
 
 function formatCurrency(n: number) { return n ? 'Rp ' + n.toLocaleString('id-ID') : '-'; }
@@ -235,12 +261,33 @@ async function onRowClick(e: any) {
 function openDialog(product?: any) {
   if (product) {
     editing.value = product;
-    form.value = { ...product, buy_price: Number(product.buyPrice) || 0, sell_price: Number(product.sellPrice) || 0, category_id: product.categoryId || '' };
+    form.value = { ...product, buy_price: Number(product.buyPrice) || 0, sell_price: Number(product.sellPrice) || 0, category_id: product.categoryId || '', image_url: product.imageUrl || '' };
   } else {
     editing.value = null;
-    form.value = { sku: '', name: '', brand: '', category_id: '', buy_price: 0, sell_price: 0 };
+    form.value = { sku: '', name: '', brand: '', category_id: '', buy_price: 0, sell_price: 0, image_url: '' };
   }
   formDialog.value = true;
+}
+
+async function onFileChange(e: Event) {
+  const file = (e.target as HTMLInputElement).files?.[0];
+  if (!file) return;
+  uploading.value = true;
+  try {
+    const fd = new FormData();
+    fd.append('file', file);
+    const { data } = await api.post('/uploads', fd);
+    form.value.image_url = data.data.url;
+  } finally { uploading.value = false; }
+}
+
+function onSkuScan(code: string) {
+  form.value.sku = code;
+}
+
+function onSearchScan(code: string) {
+  search.value = code;
+  fetchProducts();
 }
 
 async function saveProduct() {
@@ -253,6 +300,7 @@ async function saveProduct() {
       category_id: form.value.category_id || undefined,
       buy_price: form.value.buy_price || undefined,
       sell_price: form.value.sell_price || undefined,
+      image_url: form.value.image_url || undefined,
     };
     if (editing.value) {
       await api.put(`/products/${editing.value.id}`, payload);

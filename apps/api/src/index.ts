@@ -1,5 +1,7 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
+import { serveStatic } from '@hono/node-server/serve-static';
+import { join } from 'node:path';
 import authRoutes from './routes/auth';
 import userRoutes from './routes/users';
 import productRoutes from './routes/products';
@@ -10,6 +12,7 @@ import rmaRoutes from './routes/rmas';
 import stockOpnameRoutes from './routes/stock-opnames';
 import supplierReturnRoutes from './routes/supplier-returns';
 import auditLogRoutes from './routes/audit-logs';
+import uploadRoutes from './routes/uploads';
 import dashboardRoutes from './routes/dashboard';
 
 const app = new Hono();
@@ -28,8 +31,12 @@ app.route('/api/v1/supplier-returns', supplierReturnRoutes);
 app.route('/api/v1/audit-logs', auditLogRoutes);
 app.route('/api/v1/dashboard', dashboardRoutes);
 app.route('/api/v1/reports', dashboardRoutes);
+app.route('/api/v1/uploads', uploadRoutes);
 
 app.get('/api/v1/health', (c) => c.json({ success: true, data: { status: 'ok' } }));
+
+const uploadsPath = join(import.meta.dirname, '..', 'uploads');
+app.use('/uploads/*', serveStatic({ root: join(import.meta.dirname, '..') }));
 
 const port = Number(process.env.PORT) || 3034;
 
